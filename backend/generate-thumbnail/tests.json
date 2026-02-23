@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Generate thumbnail - missing prompt",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

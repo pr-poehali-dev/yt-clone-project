@@ -2,6 +2,10 @@ import { useState, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import VideoCard from "@/components/VideoCard";
 import VideoPlayer from "@/components/VideoPlayer";
+import AuthModal from "@/components/AuthModal";
+import UploadModal from "@/components/UploadModal";
+import AuthorDashboard from "@/components/AuthorDashboard";
+import { useAuth } from "@/hooks/useAuth";
 import { videos, subscribedChannels, categories, Video, formatMoney } from "@/data/videos";
 
 type Tab = "home" | "search" | "subscriptions" | "earnings";
@@ -14,6 +18,11 @@ export default function Index() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [subscribedIds, setSubscribedIds] = useState<Set<string>>(new Set(["ch1", "ch2", "ch4", "ch5"]));
+  const [showAuth, setShowAuth] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+
+  const { user, loading: authLoading, login, register, logout, becomeAuthor } = useAuth();
 
   const filteredVideos = useMemo(() => {
     let result = videos;
@@ -109,6 +118,29 @@ export default function Index() {
           </div>
         )}
 
+        {/* Auth in sidebar */}
+        {sidebarOpen && !authLoading && (
+          <div className="px-3 pb-2">
+            {user ? (
+              <button
+                onClick={logout}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+              >
+                <Icon name="LogOut" size={14} />
+                Выйти
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs gradient-primary text-white font-semibold neon-glow"
+              >
+                <Icon name="LogIn" size={14} />
+                Войти / Регистрация
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Collapse toggle */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -140,14 +172,37 @@ export default function Index() {
             </div>
           </form>
 
-          <button className="flex items-center gap-2 gradient-primary text-white px-4 py-2 rounded-full text-sm font-bold neon-glow hover:opacity-90 transition-opacity">
-            <Icon name="Upload" size={15} />
-            Загрузить
-          </button>
+          {user ? (
+            <button
+              onClick={() => setShowUpload(true)}
+              className="flex items-center gap-2 gradient-primary text-white px-4 py-2 rounded-full text-sm font-bold neon-glow hover:opacity-90 transition-opacity"
+            >
+              <Icon name="Upload" size={15} />
+              Загрузить
+            </button>
+          ) : null}
 
-          <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center cursor-pointer">
-            <Icon name="User" size={16} className="text-white" />
-          </div>
+          {!authLoading && (
+            user ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowDashboard(true)}
+                  className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center cursor-pointer neon-glow hover:opacity-90"
+                  title={user.display_name || user.username}
+                >
+                  <Icon name="User" size={16} className="text-white" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="flex items-center gap-2 bg-secondary text-foreground px-4 py-2 rounded-full text-sm font-semibold hover:bg-border transition-colors"
+              >
+                <Icon name="LogIn" size={15} />
+                Войти
+              </button>
+            )
+          )}
         </header>
 
         <div className="px-6 py-6">
@@ -401,6 +456,32 @@ export default function Index() {
       {/* Video Player Modal */}
       {selectedVideo && (
         <VideoPlayer video={selectedVideo} onClose={() => setSelectedVideo(null)} />
+      )}
+
+      {/* Auth Modal */}
+      {showAuth && (
+        <AuthModal
+          onClose={() => setShowAuth(false)}
+          onLogin={login}
+          onRegister={register}
+        />
+      )}
+
+      {/* Upload Modal */}
+      {showUpload && user && (
+        <UploadModal
+          onClose={() => setShowUpload(false)}
+          onSuccess={() => {}}
+        />
+      )}
+
+      {/* Author Dashboard */}
+      {showDashboard && user && (
+        <AuthorDashboard
+          user={user}
+          onClose={() => setShowDashboard(false)}
+          onBecomeAuthor={becomeAuthor}
+        />
       )}
     </div>
   );
